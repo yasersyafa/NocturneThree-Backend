@@ -1,13 +1,17 @@
+using AutoMapper;
+using Backend.Application.DTOs.Auth;
+using Backend.Application.DTOs.Player;
 using Backend.Application.Interfaces;
 using Backend.Application.Models;
 
 namespace Backend.Application.Services;
 
-public class AuthService(IPlayerRepository playerRepo, ISessionRepository sessionRepo, IOtpCodeService otpService) : IAuthService
+public class AuthService(IPlayerRepository playerRepo, ISessionRepository sessionRepo, IOtpCodeService otpService, IMapper mapper) : IAuthService
 {
     private readonly IPlayerRepository _playerRepo = playerRepo;
     private readonly ISessionRepository _sessionRepo = sessionRepo;
     private readonly IOtpCodeService _otpService = otpService;
+    private readonly IMapper _mapper = mapper;
 
     public async Task<bool> RegisterRequestOtpAsync(string email)
     {
@@ -27,7 +31,7 @@ public class AuthService(IPlayerRepository playerRepo, ISessionRepository sessio
         return true;
     }
 
-    public async Task<string?> VerifyOtpForRegisterAsync(string email, string code, string username, string? deviceInfo, string? ipAddress)
+    public async Task<AuthResponseDto?> VerifyOtpForRegisterAsync(string email, string code, string username, string? deviceInfo, string? ipAddress)
     {
         var valid = await _otpService.ValidateOtpAsync(email, code, "register");
         if (!valid) return null;
@@ -53,10 +57,14 @@ public class AuthService(IPlayerRepository playerRepo, ISessionRepository sessio
         await _sessionRepo.AddAsync(session);
         await _sessionRepo.SaveChangesAsync();
 
-        return token;
+        return new AuthResponseDto
+        {
+            Token = token,
+            Player = _mapper.Map<PlayerDto>(player)
+        };
     }
 
-    public async Task<string?> VerifyOtpForLoginAsync(string email, string code, string? deviceInfo, string? ipAddress)
+    public async Task<AuthResponseDto?> VerifyOtpForLoginAsync(string email, string code, string? deviceInfo, string? ipAddress)
     {
         var valid = await _otpService.ValidateOtpAsync(email, code, "login");
         if (!valid) return null;
@@ -79,6 +87,10 @@ public class AuthService(IPlayerRepository playerRepo, ISessionRepository sessio
         await _sessionRepo.AddAsync(session);
         await _sessionRepo.SaveChangesAsync();
 
-        return token;
+        return new AuthResponseDto
+        {
+            Token = token,
+            Player = _mapper.Map<PlayerDto>(player)
+        };
     }
 }

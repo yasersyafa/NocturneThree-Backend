@@ -30,10 +30,10 @@ public class AuthController(ISessionRepository session, IAuthService auth) : Con
     public async Task<IActionResult> RegisterVerifyOtp([FromBody] RegisterVerifyDto dto)
     {
         var ip = HttpContext.Connection.RemoteIpAddress?.ToString();
-        var token = await _authService.VerifyOtpForRegisterAsync(dto.Email, dto.Code, dto.Username, dto.DeviceInfo, ip);
+        var response = await _authService.VerifyOtpForRegisterAsync(dto.Email, dto.Code, dto.Username, dto.DeviceInfo, ip);
 
-        if (token == null) return BadRequest(new { message = "OTP not valid or expired." });
-        return Ok(new { token });
+        if (response == null) return BadRequest(new { message = "OTP not valid or expired." });
+        return Ok(response);
     }
 
     /// <summary>
@@ -54,10 +54,10 @@ public class AuthController(ISessionRepository session, IAuthService auth) : Con
     public async Task<IActionResult> LoginVerifyOtp([FromBody] LoginVerifyDto dto)
     {
         var ip = HttpContext.Connection.RemoteIpAddress?.ToString();
-        var token = await _authService.VerifyOtpForLoginAsync(dto.Email, dto.Code, dto.DeviceInfo, ip);
+        var response = await _authService.VerifyOtpForLoginAsync(dto.Email, dto.Code, dto.DeviceInfo, ip);
 
-        if (token == null) return BadRequest(new { message = "OTP not valid or expired." });
-        return Ok(new { token });
+        if (response == null) return BadRequest(new { message = "OTP not valid or expired." });
+        return Ok(response);
     }
 
     /// <summary>
