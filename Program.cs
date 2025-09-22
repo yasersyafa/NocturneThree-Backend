@@ -1,9 +1,16 @@
 using Backend.Application.Database;
 using Backend.Application.Interfaces;
 using Backend.Application.Repositories;
+using Backend.Application.Services;
+using Backend.Application.Settings;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Binding appsettings.json to Settings file
+builder.Services.Configure<EmailSettings>(
+    builder.Configuration.GetSection("Email")
+);
 
 // EF Database Context
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -15,6 +22,9 @@ builder.Services.AddScoped<ISessionRepository, SessionRepository>();
 builder.Services.AddScoped<IOtpCodeRepository, OtpCodeRepository>();
 
 // Add services to the container.
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IOtpCodeService, OtpCodeService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

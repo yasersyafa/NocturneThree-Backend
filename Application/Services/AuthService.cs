@@ -1,0 +1,84 @@
+using Backend.Application.Interfaces;
+using Backend.Application.Models;
+
+namespace Backend.Application.Services;
+
+public class AuthService(IPlayerRepository playerRepo, ISessionRepository sessionRepo, IOtpCodeService otpService) : IAuthService
+{
+    private readonly IPlayerRepository _playerRepo = playerRepo;
+    private readonly ISessionRepository _sessionRepo = sessionRepo;
+    private readonly IOtpCodeService _otpService = otpService;
+
+    public async Task<bool> RegisterRequestOtpAsync(string email)
+    {
+        var existing = await _playerRepo.GetByEmailAsync(email);
+        if (existing != null) return false;
+
+        await _otpService.GenerateOtpAsync(email, "register");
+        return true;
+    }
+
+    public async Task<bool> LoginRequestOtpAsync(string email)
+    {
+        var existing = await _playerRepo.GetByEmailAsync(email);
+        if (existing == null) return false;
+
+        await _otpService.GenerateOtpAsync(email, "login");
+        return true;
+    }
+
+    public async Task<string?> VerifyOtpForRegisterAsync(string email, string code, string username, string? deviceInfo, string? ipAddress)
+    {
+        var valid = await _otpService.ValidateOtpAsync(email, code, "register");
+        if (!valid) return null;
+
+        var player = new Player
+        {
+            Email = email,
+            Username = username,
+            CreatedAt = DateTime.UtcNow,
+            LastLoginAt = DateTime.UtcNow
+        };
+        await _playerRepo.AddAsync(player);
+        await _playerRepo.SaveChangesAsync();
+
+        var token = Guid.NewGuid().ToString("N");
+        var session = new Session
+        {
+            PlayerId = player.Id,
+            Token = token,
+            DeviceInfo = deviceInfo,
+            IpAddress = ipAddress
+        };
+        await _sessionRepo.AddAsync(session);
+        await _sessionRepo.SaveChangesAsync();
+
+        return token;
+    }
+
+    public async Task<string?> VerifyOtpForLoginAsync(string email, string code, string? deviceInfo, string? ipAddress)
+    {
+        var valid = await _otpService.ValidateOtpAsync(email, code, "login");
+        if (!valid) return null;
+
+        var player = await _playerRepo.GetByEmailAsync(email);
+        if (player == null) return null;
+
+        player.LastLoginAt = DateTime.UtcNow;
+        await _playerRepo.UpdateAsync(player);
+        await _playerRepo.SaveChangesAsync();
+
+        var token = Guid.NewGuid().ToString("N");
+        var session = new Session
+        {
+            PlayerId = player.Id,
+            Token = token,
+            DeviceInfo = deviceInfo,
+            IpAddress = ipAddress
+        };
+        await _sessionRepo.AddAsync(session);
+        await _sessionRepo.SaveChangesAsync();
+
+        return token;
+    }
+}
