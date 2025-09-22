@@ -1,5 +1,6 @@
 using AutoMapper;
 using Backend.Application.DTOs.Auth;
+using Backend.Application.DTOs.Otp;
 using Backend.Application.DTOs.Player;
 using Backend.Application.DTOs.Session;
 using Backend.Application.Models;
@@ -17,5 +18,10 @@ public class MappingProfile : Profile
         // Session
         CreateMap<Session, SessionDto>().ReverseMap();
         CreateMap<SessionRequestDto, Session>();
+
+        // OTP Code
+        CreateMap<OtpCode, OtpCodeDto>().ReverseMap();
+        CreateMap<OtpRequestDto, OtpCode>();
+        CreateMap<OtpVerifyDto, OtpCode>();
     }
 }
