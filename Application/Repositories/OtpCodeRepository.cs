@@ -32,4 +32,21 @@ public class OtpCodeRepository(AppDbContext dbContext) : IOtpCodeRepository
 
     public async Task SaveChangesAsync()
         => await _db.SaveChangesAsync();
+
+    public async Task InvalidatePreviousOtpAsync(string email, string purpose)
+    {
+        var otps = await _db.OtpCodes
+        .Where(o => o.Email == email && o.Purpose == purpose && !o.Consumed && o.ExpiredAt > DateTime.UtcNow)
+        .ToListAsync();
+
+        if (otps.Count != 0)
+        {
+            foreach (var otp in otps)
+            {
+                otp.Consumed = true;
+            }
+
+            _db.OtpCodes.UpdateRange(otps);
+        }
+    }
 }

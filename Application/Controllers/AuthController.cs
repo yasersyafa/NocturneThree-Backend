@@ -29,11 +29,18 @@ public class AuthController(ISessionRepository session, IAuthService auth) : Con
     [HttpPost("register/verify")]
     public async Task<IActionResult> RegisterVerifyOtp([FromBody] RegisterVerifyDto dto)
     {
-        var ip = HttpContext.Connection.RemoteIpAddress?.ToString();
-        var response = await _authService.VerifyOtpForRegisterAsync(dto.Email, dto.Code, dto.Username, dto.DeviceInfo, ip);
+        try
+        {
+            var ip = HttpContext.Connection.RemoteIpAddress?.ToString();
+            var response = await _authService.VerifyOtpForRegisterAsync(dto.Email, dto.Code, dto.Username, dto.DeviceInfo, ip);
 
-        if (response == null) return BadRequest(new { message = "OTP not valid or expired." });
-        return Ok(response);
+            if (response == null) return BadRequest(new { message = "OTP not valid or expired." });
+            return Ok(response);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return StatusCode(429, new { message = ex.Message });
+        }
     }
 
     /// <summary>
@@ -42,9 +49,16 @@ public class AuthController(ISessionRepository session, IAuthService auth) : Con
     [HttpPost("login/request")]
     public async Task<IActionResult> LoginRequestOtp([FromBody] OtpRequestDto dto)
     {
-        var success = await _authService.LoginRequestOtpAsync(dto.Email);
-        if (!success) return BadRequest(new { message = "Account not found." });
-        return Ok(new { message = "OTP has sent to your email." });
+        try
+        {
+            var success = await _authService.LoginRequestOtpAsync(dto.Email);
+            if (!success) return BadRequest(new { message = "Account not found." });
+            return Ok(new { message = "OTP has sent to your email." });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return StatusCode(429, new { message = ex.Message });
+        }
     }
 
     /// <summary>
