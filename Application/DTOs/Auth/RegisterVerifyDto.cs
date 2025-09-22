@@ -1,4 +1,4 @@
-namespace Backend.Application.DTOs.Otp;
+namespace Backend.Application.DTOs.Auth;
 
 public class RegisterVerifyDto
 {

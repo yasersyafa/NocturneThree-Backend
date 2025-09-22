@@ -22,6 +22,5 @@ public class MappingProfile : Profile
         // OTP Code
         CreateMap<OtpCode, OtpCodeDto>().ReverseMap();
         CreateMap<OtpRequestDto, OtpCode>();
-        CreateMap<OtpVerifyDto, OtpCode>();
     }
 }

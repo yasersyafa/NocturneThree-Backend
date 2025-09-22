@@ -1,4 +1,5 @@
 using Backend.Application.DTOs.Otp;
+using Backend.Application.DTOs.Auth;
 using Backend.Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
@@ -18,8 +19,8 @@ public class AuthController(ISessionRepository session, IAuthService auth) : Con
     public async Task<IActionResult> RegisterRequestOtp([FromBody] OtpRequestDto dto)
     {
         var success = await _authService.RegisterRequestOtpAsync(dto.Email);
-        if (!success) return BadRequest(new { message = "Email sudah terpakai." });
-        return Ok(new { message = "OTP telah dikirim ke email." });
+        if (!success) return BadRequest(new { message = "Email already exist, please change your eamil." });
+        return Ok(new { message = "OTP has sent to your email." });
     }
 
     /// <summary>
@@ -31,7 +32,7 @@ public class AuthController(ISessionRepository session, IAuthService auth) : Con
         var ip = HttpContext.Connection.RemoteIpAddress?.ToString();
         var token = await _authService.VerifyOtpForRegisterAsync(dto.Email, dto.Code, dto.Username, dto.DeviceInfo, ip);
 
-        if (token == null) return BadRequest(new { message = "OTP tidak valid atau kadaluarsa." });
+        if (token == null) return BadRequest(new { message = "OTP not valid or expired." });
         return Ok(new { token });
     }
 
@@ -42,20 +43,20 @@ public class AuthController(ISessionRepository session, IAuthService auth) : Con
     public async Task<IActionResult> LoginRequestOtp([FromBody] OtpRequestDto dto)
     {
         var success = await _authService.LoginRequestOtpAsync(dto.Email);
-        if (!success) return BadRequest(new { message = "Akun tidak ditemukan." });
-        return Ok(new { message = "OTP telah dikirim ke email." });
+        if (!success) return BadRequest(new { message = "Account not found." });
+        return Ok(new { message = "OTP has sent to your email." });
     }
 
     /// <summary>
     /// Verifikasi OTP untuk login
     /// </summary>
     [HttpPost("login/verify")]
-    public async Task<IActionResult> LoginVerifyOtp([FromBody] OtpVerifyDto dto)
+    public async Task<IActionResult> LoginVerifyOtp([FromBody] LoginVerifyDto dto)
     {
         var ip = HttpContext.Connection.RemoteIpAddress?.ToString();
         var token = await _authService.VerifyOtpForLoginAsync(dto.Email, dto.Code, dto.DeviceInfo, ip);
 
-        if (token == null) return BadRequest(new { message = "OTP tidak valid atau kadaluarsa." });
+        if (token == null) return BadRequest(new { message = "OTP not valid or expired." });
         return Ok(new { token });
     }
 
@@ -67,14 +68,14 @@ public class AuthController(ISessionRepository session, IAuthService auth) : Con
     {
         var token = Request.Headers.Authorization.ToString().Replace("Bearer ", "");
         if (string.IsNullOrEmpty(token))
-            return Unauthorized(new { message = "Token tidak ditemukan." });
+            return Unauthorized(new { message = "Token not found." });
 
         var session = await _sessionRepo.GetByTokenAsync(token);
-        if (session == null) return Unauthorized(new { message = "Session tidak valid." });
+        if (session == null) return Unauthorized(new { message = "Session not valid." });
 
         await _sessionRepo.RevokeAsync(session);
         await _sessionRepo.SaveChangesAsync();
 
-        return Ok(new { message = "Logout berhasil." });
+        return Ok(new { message = "Logout successful." });
     }
 }
