@@ -9,6 +9,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Session> Sessions { get; set; }
     public DbSet<OtpCode> OtpCodes { get; set; }
     public DbSet<Game> Games { get; set; }
+    public DbSet<PlayerGameData> PlayerGameData { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -27,5 +28,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
         modelBuilder.Entity<OtpCode>()
             .HasIndex(o => new { o.Email, o.Code, o.Consumed, o.Purpose });
+
+        modelBuilder.Entity<PlayerGameData>()
+            .HasIndex(x => new { x.UserId, x.GameId })
+            .IsUnique();
     }
 }
